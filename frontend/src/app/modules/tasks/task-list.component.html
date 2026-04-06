@@ -1,0 +1,83 @@
+<div class="container">
+  <h1>Gestor de Tareas</h1>
+
+  <!-- Mensajes de error -->
+  <div *ngIf="errorMessage" class="alert-error">
+    {{ errorMessage }}
+    <button (click)="errorMessage = null">X</button>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="stats" *ngIf="statistics">
+    <div>Total: {{ statistics.total }}</div>
+    <div>Pendientes: {{ statistics.pending }}</div>
+    <div>Completadas: {{ statistics.completed }}</div>
+    <div>{{ statistics.completionPercentage }}%</div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="form-section">
+    <h2>Nueva Tarea</h2>
+    <form [formGroup]="taskForm" (ngSubmit)="addTask()">
+      <div>
+        <label>Título</label>
+        <input type="text" formControlName="title" placeholder="Ingresa título">
+        <div *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched" class="error">
+          Requerido, mínimo 3 caracteres
+        </div>
+      </div>
+
+      <div>
+        <label>Descripción</label>
+        <textarea formControlName="description" placeholder="Descripción (opcional)" rows="3"></textarea>
+      </div>
+
+      <button type="submit" [disabled]="!isFormValid() || isCreatingTask">
+        {{ isCreatingTask ? 'Creando...' : 'Crear Tarea' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <button [class.active]="activeFilter === 'all'" (click)="applyFilter('all'); loadTasks()">
+      Todas ({{ tasks.length }})
+    </button>
+    <button [class.active]="activeFilter === 'pending'" (click)="applyFilter('pending'); loadTasks()">
+      Pendientes ({{ statistics?.pending || 0 }})
+    </button>
+    <button [class.active]="activeFilter === 'completed'" (click)="applyFilter('completed'); loadTasks()">
+      Completadas ({{ statistics?.completed || 0 }})
+    </button>
+  </div>
+
+  <!-- Lista de tareas -->
+  <div class="tasks">
+    <div *ngIf="isLoadingTasks">Cargando...</div>
+
+    <div *ngIf="!isLoadingTasks && filteredTasks.length === 0">
+      No hay tareas
+    </div>
+
+    <div *ngIf="!isLoadingTasks && filteredTasks.length > 0" class="task-list">
+      <div *ngFor="let task of filteredTasks" class="task-item" [class.completed]="task.isCompleted">
+        <input 
+          type="checkbox" 
+          [checked]="task.isCompleted"
+          (change)="completeTask(task)"
+        >
+        <div class="task-info">
+          <div class="title">{{ task.title }}</div>
+          <div class="desc" *ngIf="task.description">{{ task.description }}</div>
+          <div class="date">{{ task.createdAt | date }}</div>
+          <span class="status" [class.pending]="!task.isCompleted">
+            {{ task.isCompleted ? 'Completada' : 'Pendiente' }}
+          </span>
+        </div>
+        <button (click)="deleteTask(task)" [disabled]="deletingTaskId === task.id" class="delete">
+          {{ deletingTaskId === task.id ? '...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
